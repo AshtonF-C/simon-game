@@ -3,21 +3,38 @@
 <head>
   <title>Simon Game</title>
 
+  <!-- MOBILE FIX -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <style>
     body {
-      text-align:center;
-      font-family: Arial;
+      margin:0;
+      height:100vh;
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      align-items:center;
       background:#111;
       color:white;
+      font-family: Arial;
+    }
+
+    h1 { font-size: 28px; }
+    h2 { font-size: 18px; }
+
+    .game {
+      display:grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap:15px;
     }
 
     .btn {
-      width:100px;
-      height:100px;
-      margin:10px;
-      display:inline-block;
-      border-radius:15px;
-      opacity:0.6;
+      width:40vw;
+      height:40vw;
+      max-width:180px;
+      max-height:180px;
+      border-radius:20px;
+      opacity:0.7;
       transition:0.2s;
     }
 
@@ -30,6 +47,16 @@
       opacity:1;
       transform: scale(1.1);
     }
+
+    button {
+      margin-top:20px;
+      padding:10px 20px;
+      font-size:16px;
+      border:none;
+      border-radius:10px;
+      background:#444;
+      color:white;
+    }
   </style>
 </head>
 
@@ -38,9 +65,9 @@
 <h1>Simon Game</h1>
 <h2 id="status">Press Start</h2>
 
-<div>
+<div class="game">
   <div class="btn" id="red"></div>
-  <div class="btn" id="blue"></div><br>
+  <div class="btn" id="blue"></div>
   <div class="btn" id="green"></div>
   <div class="btn" id="yellow"></div>
 </div>
@@ -52,7 +79,7 @@ let sequence = [];
 let playerSequence = [];
 let colors = ["red","blue","green","yellow"];
 
-// ---- AUDIO SYSTEM ----
+// AUDIO
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
 function playSound(color){
@@ -79,7 +106,7 @@ function playSound(color){
   osc.stop(audioCtx.currentTime + 0.3);
 }
 
-// ---- VIBRATION ----
+// VIBRATION
 function vibrate(pattern){
   if(navigator.vibrate){
     navigator.vibrate(pattern);
@@ -127,7 +154,6 @@ function flash(color){
   }, 300);
 }
 
-// ---- PLAYER INPUT ----
 document.querySelectorAll(".btn").forEach(btn=>{
   btn.onclick = () => {
     let color = btn.id;
@@ -154,7 +180,6 @@ function check(){
   if(playerSequence.length === sequence.length){
     document.getElementById("status").innerText = "Good!";
     vibrate(120);
-
     setTimeout(nextRound, 900);
   }
 }
