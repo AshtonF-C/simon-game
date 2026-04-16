@@ -2,8 +2,6 @@
 <html>
 <head>
   <title>Simon Game</title>
-
-  <!-- MOBILE FIX -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <style>
@@ -11,7 +9,6 @@
       margin:0;
       height:100vh;
       display:flex;
-      flex-direction:column;
       justify-content:center;
       align-items:center;
       background:#111;
@@ -19,8 +16,27 @@
       font-family: Arial;
     }
 
-    h1 { font-size: 28px; }
-    h2 { font-size: 18px; }
+    .screen {
+      display:none;
+      flex-direction:column;
+      align-items:center;
+    }
+
+    .activeScreen {
+      display:flex;
+    }
+
+    h1 { font-size:28px; margin-bottom:20px; }
+
+    button {
+      margin:10px;
+      padding:12px 20px;
+      font-size:18px;
+      border:none;
+      border-radius:10px;
+      background:#444;
+      color:white;
+    }
 
     .game {
       display:grid;
@@ -47,48 +63,55 @@
       opacity:1;
       transform: scale(1.1);
     }
-
-    button {
-      margin-top:20px;
-      padding:10px 20px;
-      font-size:16px;
-      border:none;
-      border-radius:10px;
-      background:#444;
-      color:white;
-    }
   </style>
 </head>
 
 <body>
 
-<h1>Simon Game</h1>
-<h2 id="status">Press Start</h2>
-
-<div class="game">
-  <div class="btn" id="red"></div>
-  <div class="btn" id="blue"></div>
-  <div class="btn" id="green"></div>
-  <div class="btn" id="yellow"></div>
+<!-- MENU -->
+<div id="menu" class="screen activeScreen">
+  <h1>Simon Game</h1>
+  <button onclick="startGame()">Play</button>
+  <button onclick="showHighScore()">High Score</button>
 </div>
 
-<button onclick="startGame()">Start</button>
+<!-- GAME -->
+<div id="gameScreen" class="screen">
+  <h2 id="status">Watch...</h2>
+  <h3 id="score">Score: 0</h3>
+
+  <div class="game">
+    <div class="btn" id="red"></div>
+    <div class="btn" id="blue"></div>
+    <div class="btn" id="green"></div>
+    <div class="btn" id="yellow"></div>
+  </div>
+
+  <button onclick="goMenu()">Menu</button>
+</div>
+
+<!-- HIGH SCORE -->
+<div id="highScoreScreen" class="screen">
+  <h1>High Score</h1>
+  <h2 id="highScoreText">0</h2>
+  <button onclick="goMenu()">Back</button>
+</div>
 
 <script>
 let sequence = [];
 let playerSequence = [];
 let colors = ["red","blue","green","yellow"];
+let score = 0;
 
 // AUDIO
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
 function playSound(color){
   let freq;
-
-  if(color === "red") freq = 261.6;
-  if(color === "blue") freq = 329.6;
-  if(color === "green") freq = 392.0;
-  if(color === "yellow") freq = 523.3;
+  if(color==="red") freq=261;
+  if(color==="blue") freq=329;
+  if(color==="green") freq=392;
+  if(color==="yellow") freq=523;
 
   let osc = audioCtx.createOscillator();
   let gain = audioCtx.createGain();
@@ -97,29 +120,34 @@ function playSound(color){
   gain.connect(audioCtx.destination);
 
   osc.frequency.value = freq;
-  osc.type = "sine";
-
   gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
-  gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.3);
+  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime+0.3);
 
   osc.start();
-  osc.stop(audioCtx.currentTime + 0.3);
+  osc.stop(audioCtx.currentTime+0.3);
 }
 
 // VIBRATION
-function vibrate(pattern){
-  if(navigator.vibrate){
-    navigator.vibrate(pattern);
-  }
+function vibrate(p){ if(navigator.vibrate) navigator.vibrate(p); }
+
+// SCREEN SWITCH
+function showScreen(id){
+  document.querySelectorAll(".screen").forEach(s=>s.classList.remove("activeScreen"));
+  document.getElementById(id).classList.add("activeScreen");
 }
 
+// GAME START
 function startGame(){
+  score = 0;
   sequence = [];
+  showScreen("gameScreen");
   nextRound();
 }
 
 function nextRound(){
   playerSequence = [];
+  score++;
+  document.getElementById("score").innerText = "Score: " + score;
   document.getElementById("status").innerText = "Watch...";
 
   let next = colors[Math.floor(Math.random()*4)];
@@ -129,35 +157,30 @@ function nextRound(){
 }
 
 function playSequence(){
-  let i = 0;
-
-  let interval = setInterval(() => {
+  let i=0;
+  let interval = setInterval(()=>{
     flash(sequence[i]);
     playSound(sequence[i]);
     vibrate(60);
 
     i++;
-
-    if(i >= sequence.length){
+    if(i>=sequence.length){
       clearInterval(interval);
-      document.getElementById("status").innerText = "Your turn!";
+      document.getElementById("status").innerText="Your turn!";
     }
-  }, 700);
+  },700);
 }
 
 function flash(color){
-  let el = document.getElementById(color);
+  let el=document.getElementById(color);
   el.classList.add("active");
-
-  setTimeout(() => {
-    el.classList.remove("active");
-  }, 300);
+  setTimeout(()=>el.classList.remove("active"),300);
 }
 
+// PLAYER INPUT
 document.querySelectorAll(".btn").forEach(btn=>{
-  btn.onclick = () => {
-    let color = btn.id;
-
+  btn.onclick=()=>{
+    let color=btn.id;
     playerSequence.push(color);
 
     flash(color);
@@ -169,19 +192,40 @@ document.querySelectorAll(".btn").forEach(btn=>{
 });
 
 function check(){
-  let i = playerSequence.length - 1;
+  let i=playerSequence.length-1;
 
-  if(playerSequence[i] !== sequence[i]){
-    document.getElementById("status").innerText = "Game Over!";
-    vibrate([200,100,200,100,400]);
+  if(playerSequence[i]!==sequence[i]){
+    gameOver();
     return;
   }
 
-  if(playerSequence.length === sequence.length){
-    document.getElementById("status").innerText = "Good!";
-    vibrate(120);
-    setTimeout(nextRound, 900);
+  if(playerSequence.length===sequence.length){
+    setTimeout(nextRound,800);
   }
+}
+
+function gameOver(){
+  document.getElementById("status").innerText="Game Over!";
+  vibrate([200,100,200]);
+
+  let high = localStorage.getItem("highscore") || 0;
+
+  if(score > high){
+    localStorage.setItem("highscore", score);
+  }
+
+  setTimeout(goMenu,1500);
+}
+
+// MENU / HIGH SCORE
+function showHighScore(){
+  let high = localStorage.getItem("highscore") || 0;
+  document.getElementById("highScoreText").innerText = high;
+  showScreen("highScoreScreen");
+}
+
+function goMenu(){
+  showScreen("menu");
 }
 </script>
 
