@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Simon Game</title>
+  <title>TapRush</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <style>
@@ -20,13 +20,32 @@
       display:none;
       flex-direction:column;
       align-items:center;
+      position:relative;
+      width:100%;
+      height:100vh;
     }
 
-    .activeScreen {
-      display:flex;
+    .activeScreen { display:flex; }
+
+    #menu {
+      justify-content:center;
+      align-items:center;
+      background: url("logo.png") no-repeat center center;
+      background-size: cover;
     }
 
-    h1 { font-size:28px; margin-bottom:20px; }
+    #menu::before {
+      content:"";
+      position:absolute;
+      width:100%;
+      height:100%;
+      background: rgba(0,0,0,0.6);
+    }
+
+    #menu * {
+      position:relative;
+      z-index:1;
+    }
 
     button {
       margin:10px;
@@ -34,35 +53,67 @@
       font-size:18px;
       border:none;
       border-radius:10px;
-      background:#444;
+      background: rgba(0,0,0,0.7);
       color:white;
+      border:2px solid white;
     }
 
+    /* GAME GRID */
     .game {
       display:grid;
       grid-template-columns: repeat(2, 1fr);
       gap:15px;
+      width:90%;
+    }
+
+    /* NUMBER GRID (2 columns: 1–5 and 6–10) */
+    .numberGrid {
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
+      width:80%;
+    }
+
+    .numberColumn {
+      display:flex;
+      flex-direction:column;
+      gap:10px;
     }
 
     .btn {
-      width:40vw;
-      height:40vw;
-      max-width:180px;
-      max-height:180px;
-      border-radius:20px;
-      opacity:0.7;
+      width:100%;
+      height:60px;
+      border-radius:12px;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      font-size:22px;
+      background:#333;
       transition:0.2s;
     }
 
-    #red { background:red; }
-    #blue { background:blue; }
-    #green { background:green; }
-    #yellow { background:yellow; }
+    .colorBtn {
+      height:40vw;
+      max-height:160px;
+      border-radius:20px;
+    }
 
     .active {
-      opacity:1;
-      transform: scale(1.1);
+      background:white !important;
+      color:black;
+      transform:scale(1.1);
     }
+
+    /* COLORS */
+    .red { background:red; }
+    .blue { background:blue; }
+    .green { background:green; }
+    .yellow { background:yellow; }
+    .purple { background:purple; }
+    .orange { background:orange; }
+    .cyan { background:cyan; }
+    .pink { background:pink; }
+
   </style>
 </head>
 
@@ -70,8 +121,11 @@
 
 <!-- MENU -->
 <div id="menu" class="screen activeScreen">
-  <h1>Simon Game</h1>
-  <button onclick="startGame()">Play</button>
+  <h1>TapRush</h1>
+  <button onclick="startColorGame(4)">Easy</button>
+  <button onclick="startColorGame(6)">Medium</button>
+  <button onclick="startColorGame(8)">Hard</button>
+  <button onclick="startNumberMode()">Number Mode</button>
   <button onclick="showHighScore()">High Score</button>
 </div>
 
@@ -80,12 +134,7 @@
   <h2 id="status">Watch...</h2>
   <h3 id="score">Score: 0</h3>
 
-  <div class="game">
-    <div class="btn" id="red"></div>
-    <div class="btn" id="blue"></div>
-    <div class="btn" id="green"></div>
-    <div class="btn" id="yellow"></div>
-  </div>
+  <div id="gameBoard"></div>
 
   <button onclick="goMenu()">Menu</button>
 </div>
@@ -100,18 +149,15 @@
 <script>
 let sequence = [];
 let playerSequence = [];
-let colors = ["red","blue","green","yellow"];
+let items = [];
+let mode = "color";
 let score = 0;
 
-// AUDIO
+// SOUND
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
-function playSound(color){
-  let freq;
-  if(color==="red") freq=261;
-  if(color==="blue") freq=329;
-  if(color==="green") freq=392;
-  if(color==="yellow") freq=523;
+function playSound(val){
+  let freq = 200 + val * 50;
 
   let osc = audioCtx.createOscillator();
   let gain = audioCtx.createGain();
@@ -127,16 +173,89 @@ function playSound(color){
   osc.stop(audioCtx.currentTime+0.3);
 }
 
-// VIBRATION
 function vibrate(p){ if(navigator.vibrate) navigator.vibrate(p); }
 
-// SCREEN SWITCH
 function showScreen(id){
   document.querySelectorAll(".screen").forEach(s=>s.classList.remove("activeScreen"));
   document.getElementById(id).classList.add("activeScreen");
 }
 
-// GAME START
+// START COLOR MODE
+function startColorGame(level){
+  mode = "color";
+  items = ["red","blue","green","yellow","purple","orange","cyan","pink"].slice(0, level);
+  createBoard();
+  startGame();
+}
+
+// START NUMBER MODE
+function startNumberMode(){
+  mode = "number";
+  items = [1,2,3,4,5,6,7,8,9,10];
+  createBoard();
+  startGame();
+}
+
+// CREATE BOARD
+function createBoard(){
+  let board = document.getElementById("gameBoard");
+  board.innerHTML = "";
+
+  if(mode === "color"){
+    board.className = "game";
+
+    items.forEach(color=>{
+      let div = document.createElement("div");
+      div.className = "btn colorBtn " + color;
+      div.id = color;
+
+      div.onclick = ()=>{
+        playerSequence.push(color);
+        flash(color);
+        playSound(items.indexOf(color)+1);
+        vibrate(40);
+        check();
+      };
+
+      board.appendChild(div);
+    });
+
+  } else {
+    board.className = "numberGrid";
+
+    let col1 = document.createElement("div");
+    col1.className = "numberColumn";
+
+    let col2 = document.createElement("div");
+    col2.className = "numberColumn";
+
+    items.forEach(num=>{
+      let div = document.createElement("div");
+      div.className = "btn";
+      div.id = num;
+      div.innerText = num;
+
+      div.onclick = ()=>{
+        playerSequence.push(num);
+        flash(num);
+        playSound(num);
+        vibrate(40);
+        check();
+      };
+
+      if(num <= 5){
+        col1.appendChild(div);
+      } else {
+        col2.appendChild(div);
+      }
+    });
+
+    board.appendChild(col1);
+    board.appendChild(col2);
+  }
+}
+
+// GAME LOGIC
 function startGame(){
   score = 0;
   sequence = [];
@@ -150,7 +269,7 @@ function nextRound(){
   document.getElementById("score").innerText = "Score: " + score;
   document.getElementById("status").innerText = "Watch...";
 
-  let next = colors[Math.floor(Math.random()*4)];
+  let next = items[Math.floor(Math.random()*items.length)];
   sequence.push(next);
 
   playSequence();
@@ -160,7 +279,7 @@ function playSequence(){
   let i=0;
   let interval = setInterval(()=>{
     flash(sequence[i]);
-    playSound(sequence[i]);
+    playSound(typeof sequence[i]==="number"?sequence[i]:items.indexOf(sequence[i])+1);
     vibrate(60);
 
     i++;
@@ -171,25 +290,11 @@ function playSequence(){
   },700);
 }
 
-function flash(color){
-  let el=document.getElementById(color);
+function flash(val){
+  let el=document.getElementById(val);
   el.classList.add("active");
   setTimeout(()=>el.classList.remove("active"),300);
 }
-
-// PLAYER INPUT
-document.querySelectorAll(".btn").forEach(btn=>{
-  btn.onclick=()=>{
-    let color=btn.id;
-    playerSequence.push(color);
-
-    flash(color);
-    playSound(color);
-    vibrate(40);
-
-    check();
-  };
-});
 
 function check(){
   let i=playerSequence.length-1;
@@ -209,7 +314,6 @@ function gameOver(){
   vibrate([200,100,200]);
 
   let high = localStorage.getItem("highscore") || 0;
-
   if(score > high){
     localStorage.setItem("highscore", score);
   }
@@ -217,7 +321,6 @@ function gameOver(){
   setTimeout(goMenu,1500);
 }
 
-// MENU / HIGH SCORE
 function showHighScore(){
   let high = localStorage.getItem("highscore") || 0;
   document.getElementById("highScoreText").innerText = high;
