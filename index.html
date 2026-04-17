@@ -150,6 +150,7 @@ let playerSequence = [];
 let items = [];
 let mode = "color";
 let score = 0;
+let speed = 700; // ⚡ SPEED SYSTEM
 
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
@@ -171,7 +172,7 @@ function playSound(val){
   osc.stop(audioCtx.currentTime+0.3);
 }
 
-// 🔊 BUZZER SOUND
+// 🔊 BUZZER
 function playBuzzer(){
   let osc = audioCtx.createOscillator();
   let gain = audioCtx.createGain();
@@ -272,6 +273,7 @@ function createBoard(){
 function startGame(){
   score = 0;
   sequence = [];
+  speed = 700; // reset speed
   showScreen("gameScreen");
   nextRound();
 }
@@ -279,8 +281,12 @@ function startGame(){
 function nextRound(){
   playerSequence = [];
   score++;
-  document.getElementById("score").innerText = "Score: " + score;
 
+  // ⚡ INCREASE SPEED
+  speed -= 20;
+  if(speed < 200) speed = 200;
+
+  document.getElementById("score").innerText = "Score: " + score;
   document.getElementById("indicator").style.background = "red";
 
   let next = items[Math.floor(Math.random()*items.length)];
@@ -301,7 +307,7 @@ function playSequence(){
       clearInterval(interval);
       document.getElementById("indicator").style.background = "limegreen";
     }
-  },700);
+  }, speed);
 }
 
 function flash(val){
@@ -324,8 +330,7 @@ function check(){
 }
 
 function gameOver(){
-  playBuzzer(); 
-
+  playBuzzer();
   document.getElementById("indicator").style.background = "gray";
   vibrate([200,100,200]);
 
