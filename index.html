@@ -41,7 +41,6 @@
       background-repeat: no-repeat;
     }
 
-    /* DARK OVERLAY */
     #menu::before {
       content:"";
       position:absolute;
@@ -52,7 +51,6 @@
       background: rgba(0,0,0,0.6);
     }
 
-    /* KEEP TEXT ABOVE */
     #menu * {
       position:relative;
       z-index:1;
@@ -69,12 +67,14 @@
       border:2px solid white;
     }
 
+    /* 🔴🟢 INDICATOR */
     #indicator {
       width:40px;
       height:40px;
       border-radius:50%;
       margin-bottom:15px;
       background:red;
+      transition:0.3s;
     }
 
     .game {
@@ -121,7 +121,6 @@
       transform:scale(1.1);
     }
 
-    /* COLORS */
     .red { background:red; }
     .blue { background:blue; }
     .green { background:green; }
@@ -279,6 +278,7 @@ function nextRound(){
   score++;
   document.getElementById("score").innerText = "Score: " + score;
 
+  // 🔴 WATCH
   document.getElementById("indicator").style.background = "red";
 
   let next = items[Math.floor(Math.random()*items.length)];
@@ -297,6 +297,8 @@ function playSequence(){
     i++;
     if(i>=sequence.length){
       clearInterval(interval);
+
+      // 🟢 YOUR TURN
       document.getElementById("indicator").style.background = "limegreen";
     }
   },700);
@@ -322,7 +324,9 @@ function check(){
 }
 
 function gameOver(){
+  // ⚫ GAME OVER
   document.getElementById("indicator").style.background = "gray";
+
   vibrate([200,100,200]);
 
   let high = localStorage.getItem("highscore") || 0;
