@@ -27,21 +27,33 @@
 
     .activeScreen { display:flex; }
 
+    /* ✅ MENU BACKGROUND FIXED */
     #menu {
+      display:flex;
+      flex-direction:column;
       justify-content:center;
       align-items:center;
-      background: url("logo.png") no-repeat center center;
+      height:100vh;
+      position:relative;
+
+      background-image: url("logo.png");
+      background-position: center;
       background-size: cover;
+      background-repeat: no-repeat;
     }
 
+    /* DARK OVERLAY */
     #menu::before {
       content:"";
       position:absolute;
+      top:0;
+      left:0;
       width:100%;
       height:100%;
       background: rgba(0,0,0,0.6);
     }
 
+    /* KEEP TEXT ABOVE */
     #menu * {
       position:relative;
       z-index:1;
@@ -58,7 +70,14 @@
       border:2px solid white;
     }
 
-    /* GAME GRID */
+    #indicator {
+      width:40px;
+      height:40px;
+      border-radius:50%;
+      margin-bottom:15px;
+      background:red;
+    }
+
     .game {
       display:grid;
       grid-template-columns: repeat(2, 1fr);
@@ -66,7 +85,6 @@
       width:90%;
     }
 
-    /* NUMBER GRID (2 columns: 1–5 and 6–10) */
     .numberGrid {
       display:grid;
       grid-template-columns: 1fr 1fr;
@@ -113,7 +131,6 @@
     .orange { background:orange; }
     .cyan { background:cyan; }
     .pink { background:pink; }
-
   </style>
 </head>
 
@@ -131,7 +148,7 @@
 
 <!-- GAME -->
 <div id="gameScreen" class="screen">
-  <h2 id="status">Watch...</h2>
+  <div id="indicator"></div>
   <h3 id="score">Score: 0</h3>
 
   <div id="gameBoard"></div>
@@ -153,7 +170,6 @@ let items = [];
 let mode = "color";
 let score = 0;
 
-// SOUND
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
 function playSound(val){
@@ -180,7 +196,6 @@ function showScreen(id){
   document.getElementById(id).classList.add("activeScreen");
 }
 
-// START COLOR MODE
 function startColorGame(level){
   mode = "color";
   items = ["red","blue","green","yellow","purple","orange","cyan","pink"].slice(0, level);
@@ -188,7 +203,6 @@ function startColorGame(level){
   startGame();
 }
 
-// START NUMBER MODE
 function startNumberMode(){
   mode = "number";
   items = [1,2,3,4,5,6,7,8,9,10];
@@ -196,7 +210,6 @@ function startNumberMode(){
   startGame();
 }
 
-// CREATE BOARD
 function createBoard(){
   let board = document.getElementById("gameBoard");
   board.innerHTML = "";
@@ -255,7 +268,6 @@ function createBoard(){
   }
 }
 
-// GAME LOGIC
 function startGame(){
   score = 0;
   sequence = [];
@@ -267,7 +279,8 @@ function nextRound(){
   playerSequence = [];
   score++;
   document.getElementById("score").innerText = "Score: " + score;
-  document.getElementById("status").innerText = "Watch...";
+
+  document.getElementById("indicator").style.background = "red";
 
   let next = items[Math.floor(Math.random()*items.length)];
   sequence.push(next);
@@ -285,7 +298,7 @@ function playSequence(){
     i++;
     if(i>=sequence.length){
       clearInterval(interval);
-      document.getElementById("status").innerText="Your turn!";
+      document.getElementById("indicator").style.background = "limegreen";
     }
   },700);
 }
@@ -310,7 +323,7 @@ function check(){
 }
 
 function gameOver(){
-  document.getElementById("status").innerText="Game Over!";
+  document.getElementById("indicator").style.background = "gray";
   vibrate([200,100,200]);
 
   let high = localStorage.getItem("highscore") || 0;
